@@ -1,4 +1,4 @@
-Integrating data from SQL Server and MongoDB into Snowflake and performing analyses on this data involves several steps. Here's a high-level overview of the process:
+Integrating data from SQL Server and MongoDB into Snowflake and performing analyses on this data involves several steps.
 
 1. **Data Extraction:**
    - Extract data from SQL Server.
@@ -164,5 +164,3 @@ Perform the crucial analyses on the integrated data. Here are three common types
 2. **Load** the data into Snowflake.
 3. **Transform** the data as needed.
 4. **Analyze** the integrated data to derive insights.
-
-By following these steps, you can successfully integrate and analyze data from different sources in Snowflake for a web commerce application.
