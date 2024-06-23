@@ -1,4 +1,4 @@
-As a DBA managing AWS RDS MySQL instances, having a set of essential scripts can greatly enhance productivity. Here are the top 10 DBA scripts every DBA should have:
+### Here are the top 10 DBA scripts every DBA should have:
 
 1. **Backup and Restore Script**:
    - Automates the process of taking backups and restoring them.
