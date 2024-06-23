@@ -87,7 +87,7 @@
     OPTIMIZE TABLE your_table_name;
     ```
 ###
-## Having these scripts at your disposal can significantly improve your efficiency as a DBA managing AWS RDS MySQL instances.
+### Having these scripts at your disposal can significantly improve your efficiency as a DBA managing AWS RDS MySQL instances.
 ###
 
 ### 1. **Database Health Check Script**
