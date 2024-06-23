@@ -1,5 +1,6 @@
-Here are the top 10 DBA scripts that every DBA should have:
-
+###
+### Here are the top 10 DBA scripts that every DBA should have:
+###
 ### 1. **Database Health Check Script**
    This script provides an overview of the database's health by checking key metrics like uptime, connections, and load.
    ```sql
@@ -149,9 +150,9 @@ These scripts are tailored for AWS RDS PostgreSQL environments:
    aws rds describe-db-snapshots --db-instance-identifier your-db-instance-identifier
    aws rds describe-db-instances --db-instance-identifier your-db-instance-identifier --query 'DBInstances[*].{DBInstanceIdentifier:DBInstanceIdentifier,BackupRetentionPeriod:BackupRetentionPeriod}'
    ```
-
-For a Database Administrator (DBA) managing PostgreSQL, especially in an AWS RDS environment, having a set of essential scripts can significantly enhance productivity. Here are the top 10 DBA scripts every DBA should have:
-
+###
+### Here are the top 10 DBA scripts every DBA should have:
+###
 ### 1. **Database Health Check Script**
    This script provides an overview of the database's health by checking key metrics like uptime, connections, buffer cache, etc.
    ```sql
