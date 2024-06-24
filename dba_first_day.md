@@ -1,5 +1,3 @@
-To effectively manage your new position as a DBA for AWS RDS instances of MySQL, PostgreSQL, and MongoDB, you need essential SQL commands and AWS CLI commands to gather information and maintain the databases. Here are the key commands to use:
-
 ### Essential SQL Commands
 
 #### MySQL
@@ -193,5 +191,3 @@ To effectively manage your new position as a DBA for AWS RDS instances of MySQL,
      tar -xvzf robo3t-1.4.3-linux-x86_64-7419c406.tar.gz
      sudo mv robo3t-1.4.3-linux-x86_64-7419c406 /usr/local/bin/robo3t
      ```
-
-By using these essential SQL commands and AWS CLI commands, you can gather critical information about your databases and ensure you have the necessary tools set up on your laptop to perform your duties effectively.
