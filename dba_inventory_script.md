@@ -1,4 +1,4 @@
-### Here’s a step-by-step guide to help you gather this information:
+### Here’s a step-by-step guide to perform the databases inventory:
 
 ### 1. **Access Your Databases**
    - Ensure you have the necessary permissions to access all the databases you need to inventory.
