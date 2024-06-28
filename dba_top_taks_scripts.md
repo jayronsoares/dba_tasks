@@ -1,57 +1,5 @@
 Here are ten crucial scripts to perform routine support and maintenance tasks on AWS RDS MySQL and PostgreSQL databases:
 
-### 1. Backup Database
-#### MySQL
-```bash
-#!/bin/bash
-
-DB_INSTANCE_IDENTIFIER="your-rds-instance-id"
-BUCKET_NAME="your-s3-bucket"
-REGION="your-region"
-DATE=$(date +%Y-%m-%d)
-
-mysqldump -h $DB_INSTANCE_IDENTIFIER.cwovfnrvhjuj.us-west-2.rds.amazonaws.com -u username -p'password' --all-databases > backup-$DATE.sql
-aws s3 cp backup-$DATE.sql s3://$BUCKET_NAME/backup-$DATE.sql --region $REGION
-```
-
-#### PostgreSQL
-```bash
-#!/bin/bash
-
-DB_INSTANCE_IDENTIFIER="your-rds-instance-id"
-BUCKET_NAME="your-s3-bucket"
-REGION="your-region"
-DATE=$(date +%Y-%m-%d)
-
-PGPASSWORD=password pg_dump -h $DB_INSTANCE_IDENTIFIER.cwovfnrvhjuj.us-west-2.rds.amazonaws.com -U username -F c -b -v -f backup-$DATE.backup
-aws s3 cp backup-$DATE.backup s3://$BUCKET_NAME/backup-$DATE.backup --region $REGION
-```
-
-### 2. Restore Database
-#### MySQL
-```bash
-#!/bin/bash
-
-DB_INSTANCE_IDENTIFIER="your-rds-instance-id"
-BUCKET_NAME="your-s3-bucket"
-DATE="backup-date"
-
-aws s3 cp s3://$BUCKET_NAME/backup-$DATE.sql backup-$DATE.sql --region your-region
-mysql -h $DB_INSTANCE_IDENTIFIER.cwovfnrvhjuj.us-west-2.rds.amazonaws.com -u username -p'password' < backup-$DATE.sql
-```
-
-#### PostgreSQL
-```bash
-#!/bin/bash
-
-DB_INSTANCE_IDENTIFIER="your-rds-instance-id"
-BUCKET_NAME="your-s3-bucket"
-DATE="backup-date"
-
-aws s3 cp s3://$BUCKET_NAME/backup-$DATE.backup backup-$DATE.backup --region your-region
-PGPASSWORD=password pg_restore -h $DB_INSTANCE_IDENTIFIER.cwovfnrvhjuj.us-west-2.rds.amazonaws.com -U username -d database_name -v backup-$DATE.backup
-```
-
 ### 3. Monitor Database Performance
 #### MySQL
 ```bash
