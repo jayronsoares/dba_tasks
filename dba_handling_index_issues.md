@@ -155,7 +155,7 @@
    SHOW ENGINE INNODB STATUS;
    ```
 ---
-### Handling index-related issues specifically in an AWS RDS PostgreSQL environment, aligned with best practices:
+### Handling index-related issues specifically in an AWS RDS PostgreSQL environment:
 
 1. **Identify Unused Indexes**
    ```sql
