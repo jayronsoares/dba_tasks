@@ -1,170 +1,228 @@
-Managing AWS RDS for MySQL and PostgreSQL requires regular monitoring and maintenance to ensure the health and performance of the databases. Below are 10 crucial scripts that you should consider using daily for both MySQL and PostgreSQL environments to help maintain their health and ensure they are running optimally.
 
-### For MySQL on AWS RDS
+### 1. **Unused Indexes Detection and Drop**
+This script finds and generates the SQL to drop unused indexes.
 
-1. **Check for Slow Queries**
-   ```sql
-   SELECT * FROM mysql.slow_log ORDER BY start_time DESC LIMIT 10;
-   ```
-   This script fetches the latest slow queries, helping you identify and optimize slow-running queries.
+```sql
+-- Find and generate drop statements for unused indexes
+SET @schema := '%';  -- Set to a specific schema if needed
 
-2. **Monitor Database Size**
-   ```sql
-   SELECT table_schema AS 'Database', 
-          ROUND(SUM(data_length + index_length) / 1024 / 1024, 2) AS 'Size (MB)'
-   FROM information_schema.tables
-   GROUP BY table_schema;
-   ```
-   This script provides the size of each database, useful for monitoring growth and planning storage.
+SELECT
+    CONCAT(
+        'ALTER TABLE ', t1.TABLE_SCHEMA, '.', t1.TABLE_NAME, ' DROP INDEX ', t1.INDEX_NAME, ';'
+    ) AS Drop_Index_SQL
+FROM information_schema.STATISTICS t1
+INNER JOIN sys.schema_unused_indexes t2 
+    ON t1.TABLE_NAME = t2.object_name AND t1.INDEX_NAME = t2.index_name
+WHERE t1.TABLE_SCHEMA LIKE @schema
+GROUP BY t1.TABLE_NAME, t1.INDEX_NAME
+ORDER BY t1.TABLE_SCHEMA, t1.TABLE_NAME, t1.INDEX_NAME;
+```
 
-3. **Check for Open Connections**
-   ```sql
-   SHOW STATUS WHERE `variable_name` = 'Threads_connected';
-   ```
-   It shows the number of open connections, helping you monitor database load and connectivity issues.
+### 2. **Database Size in GB**
+This script calculates the size of each database.
 
-4. **Review Active Queries**
-   ```sql
-   SHOW FULL PROCESSLIST;
-   ```
-   This script lists all active queries, which is crucial for diagnosing performance issues and locking problems.
+```sql
+-- Calculate the size of each database in GB
+SELECT 
+    TABLE_SCHEMA, 
+    ROUND(SUM(DATA_LENGTH + INDEX_LENGTH) / 1024 / 1024 / 1024, 2) AS Size_GB 
+FROM information_schema.tables 
+GROUP BY TABLE_SCHEMA;
+```
 
-5. **Check Database Uptime**
-   ```sql
-   SHOW STATUS LIKE 'Uptime';
-   ```
-   This gives you the uptime of your MySQL instance, useful for ensuring that the database is stable and has not restarted unexpectedly.
+### 3. **Total Server Size in GB**
+This script calculates the total size of the server's databases.
 
-6. **Verify Table Status**
-   ```sql
-   SELECT TABLE_NAME, ENGINE, TABLE_ROWS, DATA_LENGTH, INDEX_LENGTH 
-   FROM information_schema.tables
-   WHERE table_schema = 'your_database_name';
-   ```
-   This script checks the status of tables in your database, including the number of rows and the amount of data stored.
+```sql
+-- Calculate the total size of all databases in GB
+SELECT 
+    ROUND(SUM(DATA_LENGTH + INDEX_LENGTH) / 1024 / 1024 / 1024, 2) AS Total_Size_GB 
+FROM information_schema.tables;
+```
 
-7. **Monitor Database Connections**
-   ```sql
-   SELECT user, host, db, command, time 
-   FROM information_schema.processlist;
-   ```
-   It helps in tracking connection activity and identifying long-running queries or locked tables.
+### 4. **Database Uptime**
+This script shows the uptime of the database server.
 
-8. **Check Index Usage**
-   ```sql
-   SELECT TABLE_NAME, INDEX_NAME, INDEX_TYPE, SEQ_IN_INDEX, COLUMN_NAME, CARDINALITY 
-   FROM information_schema.statistics
-   WHERE table_schema = 'your_database_name';
-   ```
-   This script provides details about index usage, which can be crucial for performance tuning.
+```sql
+-- Show the uptime of the database server
+SELECT TIME_FORMAT(SEC_TO_TIME(VARIABLE_VALUE), '%Hh %im %ss') AS Uptime 
+FROM information_schema.GLOBAL_STATUS 
+WHERE VARIABLE_NAME = 'Uptime';
+```
 
-9. **Review Database Errors**
-   ```sql
-   SHOW ENGINE INNODB STATUS;
-   ```
-   It gives you a detailed status of the InnoDB engine, useful for diagnosing problems and errors within your MySQL database.
+### 5. **Queries Not Using Good Indexes**
+This script identifies queries that do not use a good index.
 
-10. **Analyze Performance Metrics**
-    ```sql
-    SHOW STATUS LIKE 'Queries';
-    SHOW STATUS LIKE 'Connections';
-    SHOW STATUS LIKE 'Aborted_clients';
-    ```
-    These commands provide important performance metrics like the number of queries, connections, and aborted clients.
+```sql
+-- Identify queries not using a good index
+SELECT 
+    THREAD_ID, 
+    SQL_TEXT, 
+    ROWS_SENT, 
+    ROWS_EXAMINED, 
+    CREATED_TMP_TABLES, 
+    NO_INDEX_USED, 
+    NO_GOOD_INDEX_USED
+FROM performance_schema.events_statements_history_long
+WHERE NO_INDEX_USED > 0 OR NO_GOOD_INDEX_USED > 0;
+```
 
-### For PostgreSQL on AWS RDS
+### 6. **Queries Creating Temporary Tables**
+This script finds queries that created temporary tables.
 
-1. **Monitor Long-Running Queries**
-   ```sql
-   SELECT pid, age(clock_timestamp(), query_start), usename, query 
-   FROM pg_stat_activity 
-   WHERE state != 'idle' 
-     AND query_start < now() - interval '5 minutes' 
-   ORDER BY query_start;
-   ```
-   This script helps in identifying long-running queries that could be causing performance issues.
+```sql
+-- Find queries that created temporary tables
+SELECT 
+    THREAD_ID, 
+    SQL_TEXT, 
+    ROWS_SENT, 
+    ROWS_EXAMINED, 
+    CREATED_TMP_TABLES, 
+    CREATED_TMP_DISK_TABLES
+FROM performance_schema.events_statements_history_long
+WHERE CREATED_TMP_TABLES > 0 OR CREATED_TMP_DISK_TABLES > 0;
+```
 
-2. **Check Database Size**
-   ```sql
-   SELECT pg_database.datname, 
-          pg_size_pretty(pg_database_size(pg_database.datname)) AS size 
-   FROM pg_database;
-   ```
-   It provides the size of each database, useful for monitoring storage and planning for growth.
+### 7. **Expensive Queries**
+This script identifies queries that examine more rows than they affect or return.
 
-3. **Monitor Active Connections**
-   ```sql
-   SELECT datname, numbackends 
-   FROM pg_stat_database;
-   ```
-   This script shows the number of active connections to each database.
+```sql
+-- Identify expensive queries
+SELECT 
+    THREAD_ID, 
+    SQL_TEXT, 
+    ROWS_SENT, 
+    ROWS_EXAMINED, 
+    ROWS_AFFECTED, 
+    ERRORS, 
+    CREATED_TMP_DISK_TABLES, 
+    CREATED_TMP_TABLES, 
+    SELECT_FULL_JOIN, 
+    SELECT_FULL_RANGE_JOIN, 
+    SELECT_RANGE, 
+    SELECT_RANGE_CHECK, 
+    SELECT_SCAN, 
+    SORT_MERGE_PASSES, 
+    SORT_RANGE
+FROM performance_schema.events_statements_history_long
+WHERE 
+    ROWS_EXAMINED > ROWS_SENT 
+    OR ROWS_EXAMINED > ROWS_AFFECTED
+    OR ERRORS > 0
+    OR CREATED_TMP_DISK_TABLES > 0
+    OR CREATED_TMP_TABLES > 0
+    OR SELECT_FULL_JOIN > 0
+    OR SELECT_FULL_RANGE_JOIN > 0
+    OR SELECT_RANGE > 0
+    OR SELECT_RANGE_CHECK > 0
+    OR SELECT_SCAN > 0
+    OR SORT_MERGE_PASSES > 0
+    OR SORT_RANGE > 0;
+```
 
-4. **Review Table Bloat**
-   ```sql
-   SELECT schemaname, 
-          tablename, 
-          reltuples::numeric AS num_rows, 
-          pg_size_pretty(pg_total_relation_size(relid)) AS total_size, 
-          pg_size_pretty(pg_relation_size(relid)) AS table_size, 
-          pg_size_pretty(pg_total_relation_size(relid) - pg_relation_size(relid)) AS index_size 
-   FROM pg_catalog.pg_statio_user_tables
-   ORDER BY pg_total_relation_size(relid) DESC;
-   ```
-   It helps in identifying table bloat, which can degrade performance over time.
+### 8. **Long-Running Queries**
+This script identifies long-running queries that might impact performance.
 
-5. **Analyze Index Usage**
-   ```sql
-   SELECT indexrelname AS index, 
-          relname AS table, 
-          idx_scan AS scans, 
-          idx_tup_read AS tuples_read, 
-          idx_tup_fetch AS tuples_fetched 
-   FROM pg_stat_user_indexes 
-   JOIN pg_index 
-     ON pg_stat_user_indexes.indexrelid = pg_index.indexrelid;
-   ```
-   This script provides insights into index usage, aiding in performance optimization.
+```sql
+-- Identify long-running queries
+SELECT 
+    THREAD_ID, 
+    SQL_TEXT, 
+    TIMER_WAIT / 1000000000 AS Duration_ms
+FROM performance_schema.events_statements_history_long
+WHERE TIMER_WAIT / 1000000000 > 1000  -- Threshold in milliseconds
+ORDER BY Duration_ms DESC;
+```
 
-6. **Check for Lock Conflicts**
-   ```sql
-   SELECT pid, locktype, relation::regclass AS table, transactionid, 
-          mode, granted 
-   FROM pg_locks 
-   JOIN pg_stat_activity 
-     ON pg_locks.pid = pg_stat_activity.pid;
-   ```
-   It shows current lock information, useful for diagnosing contention issues.
+### 9. **High CPU Usage Queries**
+This script finds queries that consume a lot of CPU time.
 
-7. **Monitor Database Uptime**
-   ```sql
-   SELECT date_trunc('second', now() - pg_postmaster_start_time()) AS uptime;
-   ```
-   <p>This provides the uptime of the PostgreSQL instance, useful for ensuring stability.</p>
+```sql
+-- Identify queries with high CPU usage
+SELECT 
+    THREAD_ID, 
+    SQL_TEXT, 
+    CPU_TIME / 1000000000 AS CPU_Time_s
+FROM performance_schema.events_statements_history_long
+WHERE CPU_TIME / 1000000000 > 1  -- Threshold in seconds
+ORDER BY CPU_Time_s DESC;
+```
 
-8. **Review Vacuum and Analyze Status**
-   ```sql
-   SELECT relname AS table_name, 
-          last_vacuum, 
-          last_autovacuum, 
-          last_analyze, 
-          last_autoanalyze 
-   FROM pg_stat_all_tables;
-   ```
-   <p>It helps in monitoring the vacuum and analyze status for maintaining table performance.</p>
+### 10. **High Memory Usage Queries**
+This script identifies queries that use a significant amount of memory.
 
-9. **Check Replication Status**
-   ```sql
-   SELECT * FROM pg_stat_replication;
-   ```
-   This script checks the status of replication, crucial for high availability setups.
+```sql
+-- Identify queries with high memory usage
+SELECT 
+    THREAD_ID, 
+    SQL_TEXT, 
+    MEMORY_USED
+FROM performance_schema.events_statements_history_long
+WHERE MEMORY_USED > 1000000  -- Threshold in bytes
+ORDER BY MEMORY_USED DESC;
+```
+---
+### 1. **Check Replication Lag**
+This query helps monitor replication lag for MySQL instances configured with read replicas.
 
-10. **Inspect Database Errors**
-    ```sql
-    SELECT log_time, 
-           user_name, 
-           database_name, 
-           session_id, 
-           message 
-    FROM pg_logs 
-    WHERE log_time > current_date - interval '1 day';
-    ```
+```sql
+-- Check replication lag
+SELECT 
+    r.ReplicaServerID, 
+    r.ReplicaHost, 
+    UNIX_TIMESTAMP() - UNIX_TIMESTAMP(r.LastIoErrorTimestamp) AS ReplicationLag_seconds
+FROM performance_schema.replication_connection_status r
+WHERE r.ReplicaIoRunning = 'Yes' AND r.ReplicaSqlRunning = 'Yes';
+```
+
+### 2. **Check Long Transactions**
+Identify transactions that have been open for an extended period, which can indicate potential issues.
+
+```sql
+-- Check long-running transactions
+SELECT 
+    trx_id, 
+    trx_started, 
+    TIME_TO_SEC(TIMEDIFF(NOW(), trx_started)) AS duration_seconds,
+    trx_mysql_thread_id,
+    trx_query
+FROM information_schema.innodb_trx
+WHERE TIME_TO_SEC(TIMEDIFF(NOW(), trx_started)) > 60;  -- Adjust threshold as needed
+```
+
+### 3. **Check InnoDB Buffer Pool Usage**
+Monitor the InnoDB buffer pool usage to ensure efficient memory utilization.
+
+```sql
+-- Check InnoDB buffer pool usage
+SHOW ENGINE INNODB STATUS;
+```
+
+### 4. **Check Table Fragmentation**
+Identify fragmented tables that might impact performance and storage efficiency.
+
+```sql
+-- Check table fragmentation
+SELECT 
+    TABLE_SCHEMA, 
+    TABLE_NAME, 
+    DATA_FREE / 1024 / 1024 AS FreeSpace_MB
+FROM information_schema.tables
+WHERE DATA_FREE > 0
+ORDER BY DATA_FREE DESC;
+```
+
+### 5. **Check for Table Locks**
+Identify tables that are locked to prevent other transactions from accessing them.
+
+```sql
+-- Check for table locks
+SELECT 
+    blocking_pid AS Blocking_Process_ID,
+    blocking_query AS Blocking_Query,
+    blocked_pid AS Blocked_Process_ID,
+    blocked_query AS Blocked_Query
+FROM performance_schema.data_locks
+WHERE lock_status = 'GRANTED'
+    AND lock_type = 'TABLE';
+```
