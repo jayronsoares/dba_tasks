@@ -180,7 +180,7 @@ GROUP BY column_name
 ORDER BY frequency DESC
 LIMIT 1000;  -- Limit to avoid heavy load
 ```
-
+```sql
 -- Show column statistics
 SHOW INDEX FROM table_name WHERE Column_name = 'column_name';
 
@@ -195,7 +195,7 @@ WHERE
     TABLE_SCHEMA = 'database_name' 
     AND TABLE_NAME = 'table_name';
 
--- Postgres -> Get column statistics
+-- Postgres Get column statistics
 SELECT 
     attname, 
     n_distinct, 
@@ -206,10 +206,10 @@ FROM
 WHERE 
     tablename = 'table_name' 
     AND attname = 'column_name';
+```
 
-
--- Utilizing Python scripts
----
+###  Utilizing Python scripts
+```python
 import pandas as pd
 import pymysql
 from sqlalchemy import create_engine
@@ -305,3 +305,36 @@ def main():
 
 if __name__ == '__main__':
     main()
+```
+
+### Key Enhancements
+
+1. **Query Limits**:
+    - The `LIMIT` clause is used in SQL queries to avoid loading too much data at once, reducing the load on the database.
+
+2. **Connection Pooling**:
+    - The `create_engine` function from SQLAlchemy is configured with `pool_size` and `max_overflow` to manage connection pooling, ensuring efficient reuse of database connections and limiting the number of concurrent connections.
+
+3. **Error Handling**:
+    - Each function includes a `try-except` block to catch and log SQL and connection errors using SQLAlchemy's `SQLAlchemyError`.
+    - Errors are logged with `logging`, providing a record of any issues encountered during execution.
+
+4. **Logging**:
+    - The script uses the `logging` module to log informational messages and errors, helping track the execution flow and troubleshoot issues.
+
+5. **Modularity**:
+    - Functions are organized to perform specific tasks, making the code modular, reusable, and easier to maintain.
+
+6. **Security**:
+    - The database credentials should be handled securely. Consider storing them in environment variables or secure configuration files, as shown below:
+
+```python
+import os
+
+db_config = {
+    'user': os.getenv('DB_USER'),
+    'password': os.getenv('DB_PASSWORD'),
+    'host': os.getenv('DB_HOST'),
+    'database': os.getenv('DB_NAME')
+}
+```
