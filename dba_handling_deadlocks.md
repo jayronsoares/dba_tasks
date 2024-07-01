@@ -5,11 +5,7 @@
 
 1. **Enable Deadlock Logging**: Ensure that deadlocks are logged so you can quickly diagnose the problem.
     - **AWS Console**: Go to **RDS** > **Databases** > select your DB instance > **Logs & events** > enable **General Log** and **Slow Query Log**.
-    - **AWS CLI**:
-      ```bash
-      aws rds modify-db-parameter-group --db-parameter-group-name <your-db-parameter-group-name> --parameters "ParameterName=slow_query_log,ParameterValue=1,ApplyMethod=immediate"
-      ```
-
+      
 2. **Query Performance Schema to Identify Deadlocks**:
     Use the `performance_schema` to find threads and processes involved in deadlocks.
 
