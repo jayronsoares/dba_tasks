@@ -77,15 +77,15 @@ def get_instance_metrics(instance_id):
 
 # Function to check if an instance is a Read Replica
 def is_read_replica(instance):
-    return instance['ReadReplicaSourceDBInstanceIdentifier'] is not None
+    return instance.get('ReadReplicaSourceDBInstanceIdentifier') is not None
 
 # Function to check if an instance has no connections for 1 month
 def no_connections_for_one_month(instance):
     try:
         # Calculate time delta
-        last_connection_time = instance['LatestRestorableTime']
+        last_connection_time = instance.get('LatestRestorableTime')
         if last_connection_time:
-            return (datetime.utcnow() - last_connection_time).days > 30
+            return (datetime.utcnow() - last_connection_time.replace(tzinfo=None)).days > 30
         else:
             return False
     except Exception as e:
@@ -93,11 +93,11 @@ def no_connections_for_one_month(instance):
         return False
 
 # Function to apply optimization checks
-def apply_optimization_checks(instance_metrics):
+def apply_optimization_checks(instance_metrics, instance_data):
     optimized_instances = []
     for metrics in instance_metrics:
         instance_id = metrics['Instance Identifier']
-        is_read_rep = is_read_replica(instance_id)
+        is_read_rep = is_read_replica(instance_data.get(instance_id, {}))
         cpu_utilization = metrics['Average CPU (%)']
         io_throughput = metrics['Average Total IOPS']
 
@@ -106,7 +106,7 @@ def apply_optimization_checks(instance_metrics):
             metrics['Optimization Type'] = 'Read Replica Optimization'
 
         # Check for Under-utilized Instances - No connections for 1 month, CPU utilization < 5%, and I/O throughput < 5%
-        elif no_connections_for_one_month(instance_id) and cpu_utilization < 5 and io_throughput < 5:
+        elif no_connections_for_one_month(instance_data.get(instance_id, {})) and cpu_utilization < 5 and io_throughput < 5:
             metrics['Optimization Type'] = 'Under-utilized Instance'
 
         # Check for Right-size Instances - CPU utilization < 30% and I/O throughput < 30%
@@ -118,16 +118,16 @@ def apply_optimization_checks(instance_metrics):
     return optimized_instances
 
 # Function to fetch all RDS instances with pagination
-def paginate(func):
+def paginate(func, result_key):
     def pager(*args, **kwargs):
         paginator = func(*args, **kwargs)
         for page in paginator:
-            yield from page[args[1]]
+            yield from page.get(result_key, [])
     return pager
 
 # Retrieve all RDS instances with pagination
 try:
-    paginate_rds_instances = paginate(rds_client.get_paginator('describe_db_instances').paginate)
+    paginate_rds_instances = paginate(rds_client.get_paginator('describe_db_instances').paginate, 'DBInstances')
     instances = list(chain.from_iterable(paginate_rds_instances()))
 except Exception as e:
     print(f"Error retrieving RDS instances: {e}")
@@ -135,6 +135,7 @@ except Exception as e:
 
 # Initialize list to store instance metrics
 instance_metrics = []
+instance_data = {instance['DBInstanceIdentifier']: instance for instance in instances}
 
 # Process each instance to check optimization criteria
 for instance in instances:
@@ -147,7 +148,7 @@ for instance in instances:
         instance_metrics.append(metrics)
 
 # Apply optimization checks
-optimized_instances = apply_optimization_checks(instance_metrics)
+optimized_instances = apply_optimization_checks(instance_metrics, instance_data)
 
 # Convert data list to DataFrame
 df = pd.DataFrame(optimized_instances)
