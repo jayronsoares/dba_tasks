@@ -36,6 +36,7 @@ Here’s an enhanced version of the script with improved error handling and flex
 import boto3
 from datetime import datetime, timedelta
 import argparse
+import pandas as pd
 
 # Argument parser for flexibility
 parser = argparse.ArgumentParser(description='Check RDS instance metrics')
@@ -43,6 +44,7 @@ parser.add_argument('--region', type=str, default='us-west-2', help='AWS region'
 parser.add_argument('--days', type=int, default=7, help='Number of days for metrics')
 parser.add_argument('--cpu_threshold', type=float, default=30, help='CPU utilization threshold')
 parser.add_argument('--io_threshold', type=float, default=30, help='I/O utilization threshold')
+parser.add_argument('--output', type=str, default='output.xlsx', help='Output file name for metrics')
 args = parser.parse_args()
 
 # AWS session initialization
@@ -53,6 +55,9 @@ cloudwatch_client = session.client('cloudwatch')
 # Define time range
 end_time = datetime.utcnow()
 start_time = end_time - timedelta(days=args.days)
+
+# Initialize data list for storing metrics
+data = []
 
 # Retrieve RDS instances
 try:
@@ -105,15 +110,27 @@ for instance in instances['DBInstances']:
 
         # Check if the instance meets the criteria
         if cpu_avg < args.cpu_threshold and total_iops_avg < args.io_threshold:
-            print(f"Instance {instance_id} has low CPU and I/O utilization:")
-            print(f"  Average CPU: {cpu_avg}%")
-            print(f"  Average Read IOPS: {read_iops_avg}")
-            print(f"  Average Write IOPS: {write_iops_avg}")
-            print(f"  Average Total IOPS: {total_iops_avg}")
+            instance_data = {
+                'Instance Identifier': instance_id,
+                'Average CPU (%)': cpu_avg,
+                'Average Read IOPS': read_iops_avg,
+                'Average Write IOPS': write_iops_avg,
+                'Average Total IOPS': total_iops_avg
+            }
+            data.append(instance_data)
+
     except Exception as e:
         print(f"Error retrieving metrics for {instance_id}: {e}")
 
     print("")
+
+# Convert data list to DataFrame
+df = pd.DataFrame(data)
+
+# Save DataFrame to Excel file
+output_file = args.output
+df.to_excel(output_file, index=False)
+print(f"Metrics saved to {output_file}")
 ```
 
 ### Running the Script in VS Code Terminal
