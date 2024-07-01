@@ -15,22 +15,7 @@
 5. **Metrics Calculation**: It calculates the average CPU and I/O over the specified period.
 6. **Filtering**: It checks if the instance's average CPU and I/O are below 30%, and if so, prints the instance details.
 
-### Key Points to Consider
-
-- **AWS Region**: The script initializes a session with a specific region (`us-west-2`). Ensure you update it to match the region of your RDS instances.
-- **Detailed Monitoring**: The script assumes that CloudWatch detailed monitoring is enabled for your RDS instances, which provides metrics at 1-minute intervals. If detailed monitoring is not enabled, the data may be less granular.
-- **Periodicity and Granularity**: The script uses a period of 86400 seconds (one day) to aggregate data. This is appropriate for a 7-day overview but might miss short periods of high usage. Adjust the period if you need more granular insights.
-- **CloudWatch Limits**: Ensure that your CloudWatch usage remains within the free tier to avoid additional charges. The AWS free tier includes 1,000,000 API requests per month, which should cover occasional script runs.
-
-### Potential Enhancements
-
-1. **Error Handling**: Add error handling to manage issues like missing data points or API request failures.
-2. **Flexibility**: Allow the script to accept parameters like time range, thresholds, and regions to make it more flexible for different use cases.
-3. **Output**: Save the results to a file or send an alert (e.g., via email) for easier tracking of underutilized instances.
-
 ### Enhanced Python Code Example
-
-Here’s an enhanced version of the script with improved error handling and flexibility:
 
 ```python
 import boto3
