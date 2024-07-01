@@ -1,5 +1,5 @@
 
-### Updated Script with Calculation and Checks
+### [Report of the main metrics](https://aws.amazon.com/blogs/database/optimizing-costs-in-amazon-rds/?sc_channel=sm&sc_campaign=Support&sc_publisher=REDDIT&sc_country=global&sc_geo=GLOBAL&sc_outcome=AWS%20Support&sc_content=Support&trk=Support&linkId=410997030)
 
 ```python
 import boto3
