@@ -82,10 +82,10 @@ def is_read_replica(instance):
 # Function to check if an instance has no connections for 1 month
 def no_connections_for_one_month(instance):
     try:
-        # Calculate time delta
         last_connection_time = instance.get('LatestRestorableTime')
         if last_connection_time:
-            return (datetime.utcnow() - last_connection_time.replace(tzinfo=None)).days > 30
+            last_connection_time = last_connection_time.replace(tzinfo=None)
+            return (datetime.utcnow() - last_connection_time).days > 30
         else:
             return False
     except Exception as e:
@@ -97,7 +97,8 @@ def apply_optimization_checks(instance_metrics, instance_data):
     optimized_instances = []
     for metrics in instance_metrics:
         instance_id = metrics['Instance Identifier']
-        is_read_rep = is_read_replica(instance_data.get(instance_id, {}))
+        instance = instance_data.get(instance_id, {})
+        is_read_rep = is_read_replica(instance)
         cpu_utilization = metrics['Average CPU (%)']
         io_throughput = metrics['Average Total IOPS']
 
@@ -106,7 +107,7 @@ def apply_optimization_checks(instance_metrics, instance_data):
             metrics['Optimization Type'] = 'Read Replica Optimization'
 
         # Check for Under-utilized Instances - No connections for 1 month, CPU utilization < 5%, and I/O throughput < 5%
-        elif no_connections_for_one_month(instance_data.get(instance_id, {})) and cpu_utilization < 5 and io_throughput < 5:
+        elif no_connections_for_one_month(instance) and cpu_utilization < 5 and io_throughput < 5:
             metrics['Optimization Type'] = 'Under-utilized Instance'
 
         # Check for Right-size Instances - CPU utilization < 30% and I/O throughput < 30%
@@ -129,6 +130,8 @@ def paginate(func, result_key):
 try:
     paginate_rds_instances = paginate(rds_client.get_paginator('describe_db_instances').paginate, 'DBInstances')
     instances = list(chain.from_iterable(paginate_rds_instances()))
+    # Print debug statement to check instances
+    print(f"Retrieved {len(instances)} instances.")
 except Exception as e:
     print(f"Error retrieving RDS instances: {e}")
     exit()
@@ -157,6 +160,7 @@ df = pd.DataFrame(optimized_instances)
 output_file = args.output
 df.to_excel(output_file, index=False)
 print(f"Metrics saved to {output_file}")
+
 ```
 
 ### Explanation and Enhancements
