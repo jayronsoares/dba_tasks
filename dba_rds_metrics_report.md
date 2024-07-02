@@ -1,26 +1,11 @@
 
-### [Report of the main metrics](https://aws.amazon.com/blogs/database/optimizing-costs-in-amazon-rds/?sc_channel=sm&sc_campaign=Support&sc_publisher=REDDIT&sc_country=global&sc_geo=GLOBAL&sc_outcome=AWS%20Support&sc_content=Support&trk=Support&linkId=410997030)
+### [AWS RDS Report of the main metrics](https://aws.amazon.com/blogs/database/optimizing-costs-in-amazon-rds/?sc_channel=sm&sc_campaign=Support&sc_publisher=REDDIT&sc_country=global&sc_geo=GLOBAL&sc_outcome=AWS%20Support&sc_content=Support&trk=Support&linkId=410997030)
 
 ### 1. **Cost Optimization**
 
 - **Read Replica Management**: Identifies read replica instances with low CPU utilization and I/O throughput. If these metrics are below 30%, the script suggests shutting down or downsizing these replicas to save costs.
 - **Under-Utilized Instances**: Detects instances that have no connections for over a month and very low CPU and I/O usage. Alerts are generated, and in non-production environments, it takes further action by suggesting or taking snapshots and stopping the instances if no corrective measures are taken.
 - **Right-Sizing**: Flags instances where CPU and I/O metrics are consistently low, suggesting potential downsizing to reduce costs while maintaining sufficient performance.
-
-### 2. **Resource Utilization Monitoring**
-
-- **Collect Metrics**: The script collects essential metrics like CPU utilization, I/O throughput, and last connection time for each RDS instance. These metrics are critical for determining whether the instance is being underutilized or if it is operating efficiently.
-- **Paginated Data Retrieval**: Utilizes AWS API pagination to handle large sets of data without incurring unnecessary AWS API costs, ensuring efficient and scalable data retrieval.
-
-### 3. **Alerting and Reporting**
-
-- **Alerts**: For production environments, alerts are generated to notify the owner or responsible parties of under-utilized instances or opportunities for cost-saving actions like right-sizing. In non-production, additional actions like snapshot creation and instance stoppage are suggested or executed.
-- **Reports**: The script generates a detailed report in the form of an Excel file (`.xlsx`) that summarizes the actions taken or suggested for each instance. This file helps in tracking the performance and utilization of RDS instances and making informed decisions for cost optimization.
-
-### 4. **Automation and Proactive Management**
-
-- **Proactive Management**: The script acts as an automated system to proactively manage RDS resources, ensuring that unused or under-utilized resources are optimized. This proactive approach helps in reducing cloud costs and improving resource efficiency without manual intervention.
-- **Automated Actions**: In non-production environments, the script can automatically take snapshots and stop instances that meet the criteria for under-utilization, reducing the overhead for administrators to manually handle these tasks.
 
 ### Detailed Breakdown of Script Actions
 
