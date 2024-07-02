@@ -1,4 +1,4 @@
-## Check AWS RDS Report 
+## Check AWS RDS Usage Report 
 
 ```python
 import boto3
