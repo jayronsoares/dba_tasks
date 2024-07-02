@@ -43,8 +43,6 @@ To effectively identify cost reduction opportunities through metric patterns in 
 
 ---
 
-Certainly! Here are simplified mathematical formulas and calculations you can use to monitor and identify cost reduction opportunities based on the metrics typically monitored for AWS RDS instances:
-
 ### 1. CPU Utilization
 
 - **Formula**: 
@@ -61,9 +59,9 @@ Certainly! Here are simplified mathematical formulas and calculations you can us
 
 - **Formula**: 
   - Calculate percentage of free storage space relative to allocated storage:
-    \[
+    $`\[
     \text{Free Storage Percentage} = \left( \frac{\text{Free Storage Space}}{\text{Allocated Storage}} \right) \times 100
-    \]
+    \]`$
 
 - **Cost Reduction Opportunities**:
   - **Low Free Space**: Increase allocated storage if free space < 20-30% of allocated storage.
