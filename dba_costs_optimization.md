@@ -1,4 +1,4 @@
-To effectively identify cost reduction opportunities through metric patterns in AWS RDS instances, you can establish threshold calculations and patterns for each crucial metric. Here are pattern calculations and considerations for each metric based on AWS RDS best practices:
+To effectively identify cost reduction opportunities through metric patterns in AWS RDS instances, you can establish threshold calculations and patterns for each crucial metrics:
 
 ### 1. CPU Utilization
 
@@ -59,9 +59,9 @@ To effectively identify cost reduction opportunities through metric patterns in 
 
 - **Formula**: 
   - Calculate percentage of free storage space relative to allocated storage:
-    $`\[
+    $\[
     \text{Free Storage Percentage} = \left( \frac{\text{Free Storage Space}}{\text{Allocated Storage}} \right) \times 100
-    \]`$
+    \]$
 
 - **Cost Reduction Opportunities**:
   - **Low Free Space**: Increase allocated storage if free space < 20-30% of allocated storage.
@@ -80,9 +80,9 @@ To effectively identify cost reduction opportunities through metric patterns in 
 
 - **Formula**: 
   - Calculate average latency over a period (e.g., daily average):
-    \[
+    $\[
     \text{Average Latency} = \frac{\sum \text{Latency readings}}{\text{Number of readings}}
-    \]
+    \]$
 
 - **Cost Reduction Opportunities**:
   - **High Latency**: Optimize indexes, queries, or upgrade storage for faster response times.
@@ -92,9 +92,9 @@ To effectively identify cost reduction opportunities through metric patterns in 
 
 - **Formula**: 
   - Calculate average IOPS over a period (e.g., daily average):
-    \[
+    $\[
     \text{Average IOPS} = \frac{\sum \text{IOPS readings}}{\text{Number of readings}}
-    \]
+    \]$
 
 - **Cost Reduction Opportunities**:
   - **High IOPS**: Optimize queries, indexes, or upgrade to higher-performance storage.
