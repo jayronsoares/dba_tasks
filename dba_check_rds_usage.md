@@ -1,4 +1,4 @@
-### Report Check AWS RDS Usage
+## Check AWS RDS Report 
 
 ```python
 import boto3
@@ -217,19 +217,3 @@ if __name__ == "__main__":
     monitor_rds_instances()
     print("RDS instance monitoring and optimization script executed successfully.")
 ```
-
-### Explanation of Updates:
-
-1. **`get_cloudwatch_metrics` Function**:
-   - This function fetches various metrics (`CPUUtilization`, `IOThroughput`, `ReadLatency`, `WriteLatency`, `FreeStorageSpace`, `DatabaseConnections`) for a specified RDS instance using CloudWatch.
-   - Adjust the metric names and statistics (`Average`, `Sum`, etc.) as per your actual monitoring requirements and CloudWatch metrics available.
-
-2. **Integration with `monitor_rds
-
-_instances`**:
-   - The `get_cloudwatch_metrics` function is integrated into the `monitor_rds_instances` loop to fetch metrics for each RDS instance.
-   - Metrics are fetched once per instance, reducing unnecessary API calls and ensuring cost-efficient monitoring.
-
-3. **Action and Reporting**:
-   - Instances meeting specific conditions (`is_read_replica`, under-utilized, right-sizing) are appended to the `metrics` list with relevant details and recommended actions.
-   - The final metrics are stored in a Pandas DataFrame and exported to an Excel file (`rds_metrics_report.xlsx`) for further analysis and reporting.
