@@ -47,9 +47,9 @@ To effectively identify cost reduction opportunities through metric patterns in 
 
 - **Formula**: 
   - Calculate average CPU utilization over a period (e.g., daily average):
-    \[
+    $\[
     \text{Average CPU Utilization} = \frac{\sum \text{CPU Utilization readings}}{\text{Number of readings}}
-    \]
+    \]$
 
 - **Cost Reduction Opportunities**:
   - **High Utilization**: Upgrade instance if average CPU > 70-80%.
