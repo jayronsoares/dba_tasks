@@ -1,238 +1,38 @@
-## Top 10 Troubleshooting
-
-### 1. Identifying and Resolving Slow Queries
-
-**Problem:** Slow queries affecting application performance.
-
-**Solution:**
-1. **Enable Slow Query Log:**
-   ```sql
-   CALL mysql.rds_enable_slow_query_log();
-   ```
-2. **Check Slow Queries:**
-   ```sql
-   SELECT * FROM mysql.slow_log ORDER BY query_time DESC LIMIT 10;
-   ```
-3. **Analyze Execution Plan:**
-   ```sql
-   EXPLAIN FORMAT=JSON <your-slow-query>;
-   ```
-4. **Optimize the Query:** Add necessary indexes, rewrite the query, or break it into smaller queries.
-
-### 2. Managing High CPU Utilization
-
-**Problem:** High CPU usage causing performance degradation.
-
-**Solution:**
-1. **Identify High CPU Queries:**
-   ```sql
-   SELECT * FROM performance_schema.events_statements_summary_by_digest
-   WHERE SUM_TIMER_WAIT > 100000000000
-   ORDER BY SUM_TIMER_WAIT DESC;
-   ```
-2. **Analyze and Optimize:**
-   ```sql
-   EXPLAIN FORMAT=JSON <high-cpu-query>;
-   ```
-3. **Tune Instance Parameters:** Adjust `innodb_buffer_pool_size`, `max_connections`, etc.
-
-### 3. Fixing Lock Wait Timeout Issues
-
-**Problem:** Frequent lock wait timeouts leading to application errors.
-
-**Solution:**
-1. **Identify Blocking Queries:**
-   ```sql
-   SELECT * FROM information_schema.INNODB_LOCK_WAITS;
-   ```
-2. **Analyze the Blocking Query:**
-   ```sql
-   SELECT * FROM information_schema.INNODB_LOCKS WHERE LOCK_TRX_ID=<blocking_trx_id>;
-   ```
-3. **Kill the Blocking Transaction if Necessary:**
-   ```sql
-   CALL mysql.rds_kill(<blocking_thread_id>);
-   ```
-
-### 4. Resolving Disk Space Issues
-
-**Problem:** Running out of disk space affecting database operations.
-
-**Solution:**
-1. **Check Disk Usage:**
-   ```sql
-   SELECT table_schema AS "Database",
-   ROUND(SUM(data_length + index_length) / 1024 / 1024, 1) AS "Size (MB)"
-   FROM information_schema.tables
-   GROUP BY table_schema;
-   ```
-2. **Clean Up Unused Data:**
-   ```sql
-   DELETE FROM <table> WHERE <condition>;
-   ```
-3. **Enable Binary Log Compression:**
-   ```sql
-   CALL mysql.rds_enable_log_bin_compression();
-   ```
-
-### 5. Handling Replication Lag
-
-**Problem:** Replication lag causing read replica inconsistencies.
-
-**Solution:**
-1. **Check Replication Status:**
-   ```sql
-   SHOW SLAVE STATUS\G;
-   ```
-2. **Identify Delays:**
-   ```sql
-   SELECT * FROM mysql.rds_replica_status WHERE Time_Lag > 0;
-   ```
-3. **Optimize Write Operations:** Reduce the load on the master instance by optimizing write-heavy queries.
-
-### 6. Resolving Memory Issues
-
-**Problem:** Memory bottlenecks leading to database performance degradation.
-
-**Solution:**
-1. **Identify Memory Usage:**
-   ```sql
-   SHOW ENGINE INNODB STATUS\G;
-   ```
-2. **Optimize Memory Parameters:**
-   ```sql
-   SET GLOBAL innodb_buffer_pool_size=<new_size>;
-   ```
-3. **Analyze and Optimize Queries:** Rewrite queries to reduce memory consumption.
-
-### 7. Addressing Frequent Failovers
-
-**Problem:** Unstable environment due to frequent failovers.
-
-**Solution:**
-1. **Check Recent Failovers:**
-   ```sql
-   SELECT * FROM mysql.rds_history WHERE source = 'FAILOVER';
-   ```
-2. **Analyze the Cause:**
-   - Network issues
-   - Instance-level issues (e.g., CPU, memory)
-3. **Mitigate the Issue:** Improve instance type, optimize queries, or enhance network stability.
-
-### 8. Troubleshooting Connection Issues
-
-**Problem:** Frequent connection drops affecting application connectivity.
-
-**Solution:**
-1. **Check Connection Logs:**
-   ```sql
-   SHOW PROCESSLIST;
-   ```
-2. **Adjust Connection Parameters:**
-   ```sql
-   SET GLOBAL max_connections=<new_value>;
-   SET GLOBAL wait_timeout=<new_value>;
-   SET GLOBAL interactive_timeout=<new_value>;
-   ```
-
-### 9. Handling Deadlocks
-
-**Problem:** Deadlocks causing transaction rollbacks.
-
-**Solution:**
-1. **Identify Deadlocks:**
-   ```sql
-   SHOW ENGINE INNODB STATUS\G;
-   ```
-2. **Analyze and Resolve:**
-   ```sql
-   SELECT * FROM information_schema.INNODB_DEADLOCKS;
-   ```
-3. **Optimize Transaction Logic:** Review and optimize the transaction sequence in application code.
-
-### 10. Monitoring and Optimizing Read Performance
-
-**Problem:** Slow read operations affecting application performance.
-
-**Solution:**
-1. **Analyze Query Performance:**
-   ```sql
-   SELECT * FROM performance_schema.events_statements_summary_by_digest
-   WHERE DIGEST_TEXT LIKE 'SELECT%'
-   ORDER BY COUNT_STAR DESC LIMIT 10;
-   ```
-2. **Add Indexes:**
-   ```sql
-   CREATE INDEX idx_column ON table(column);
-   ```
-3. **Partition Large Tables:**
-   ```sql
-   ALTER TABLE table PARTITION BY RANGE(column) (
-       PARTITION p0 VALUES LESS THAN (1991),
-       PARTITION p1 VALUES LESS THAN (1995),
-       PARTITION p2 VALUES LESS THAN (2000)
-   );
-   ```
-
 ### Advanced Troubleshooting Examples for DBA in AWS RDS Aurora MySQL
-
-When managing an AWS RDS Aurora MySQL instance, monitoring and troubleshooting various performance metrics such as CPU utilization, freeable memory, IOPS, and throughput is crucial.
 
 #### 1. **CPU Utilization**
 
-**Query**: Identify the queries consuming the most CPU.
+**Query**: Identify the queries consuming the most CPU time.
 
 ```sql
 SELECT 
-    ps.id, 
-    ps.user, 
-    ps.host, 
-    ps.db, 
-    ps.command, 
-    ps.time, 
-    ps.state, 
-    ps.info, 
-    ps.cpu_time, 
-    ps.cpu_usage
+    sql_text,
+    current_schema,
+    exec_count,
+    total_cpu_time/1000 AS total_cpu_time_ms,
+    avg_cpu_time/1000 AS avg_cpu_time_ms
 FROM 
-    performance_schema.threads ps
-JOIN 
-    performance_schema.events_statements_summary_by_thread_by_event_name es 
-ON 
-    ps.thread_id = es.thread_id
-WHERE 
-    ps.cpu_time > 0
+    performance_schema.events_statements_summary_by_digest
 ORDER BY 
-    ps.cpu_usage DESC 
+    total_cpu_time DESC
 LIMIT 10;
 ```
 
 #### 2. **Freeable Memory**
 
-**Query**: Identify the queries with high memory usage.
+**Query**: Identify the largest memory-consuming queries.
 
 ```sql
 SELECT 
-    ps.id, 
-    ps.user, 
-    ps.host, 
-    ps.db, 
-    ps.command, 
-    ps.time, 
-    ps.state, 
-    ps.info, 
-    ps.memory_used, 
-    ps.memory_allocated
+    sql_text,
+    current_schema,
+    exec_count,
+    sum_created_tmp_disk_tables AS tmp_disk_tables,
+    sum_created_tmp_tables AS tmp_tables
 FROM 
-    performance_schema.threads ps
-JOIN 
-    performance_schema.events_statements_summary_by_thread_by_event_name es 
-ON 
-    ps.thread_id = es.thread_id
-WHERE 
-    ps.memory_used > 0
+    performance_schema.events_statements_summary_by_digest
 ORDER BY 
-    ps.memory_used DESC 
+    (sum_created_tmp_disk_tables + sum_created_tmp_tables) DESC
 LIMIT 10;
 ```
 
@@ -242,14 +42,13 @@ LIMIT 10;
 
 ```sql
 SELECT 
-    table_schema, 
-    table_name, 
-    COUNT_READ, 
-    SUM_TIMER_READ
+    OBJECT_SCHEMA,
+    OBJECT_NAME,
+    COUNT_READ/1000 AS count_read_k
 FROM 
     performance_schema.table_io_waits_summary_by_table
 ORDER BY 
-    COUNT_READ DESC 
+    COUNT_READ DESC
 LIMIT 10;
 ```
 
@@ -259,14 +58,13 @@ LIMIT 10;
 
 ```sql
 SELECT 
-    table_schema, 
-    table_name, 
-    COUNT_WRITE, 
-    SUM_TIMER_WRITE
+    OBJECT_SCHEMA,
+    OBJECT_NAME,
+    COUNT_WRITE/1000 AS count_write_k
 FROM 
     performance_schema.table_io_waits_summary_by_table
 ORDER BY 
-    COUNT_WRITE DESC 
+    COUNT_WRITE DESC
 LIMIT 10;
 ```
 
@@ -276,25 +74,17 @@ LIMIT 10;
 
 ```sql
 SELECT 
-    ps.id, 
-    ps.user, 
-    ps.host, 
-    ps.db, 
-    ps.command, 
-    ps.time, 
-    ps.state, 
-    ps.info, 
-    ps.bytes_received
+    sql_text,
+    current_schema,
+    exec_count,
+    sum_select_full_join AS full_joins,
+    sum_select_full_range_join AS full_range_joins,
+    sum_select_range AS range_selects,
+    sum_select_range_check AS range_checks
 FROM 
-    performance_schema.threads ps
-JOIN 
-    performance_schema.events_statements_summary_by_thread_by_event_name es 
-ON 
-    ps.thread_id = es.thread_id
-WHERE 
-    ps.bytes_received > 0
+    performance_schema.events_statements_summary_by_digest
 ORDER BY 
-    ps.bytes_received DESC 
+    (sum_select_full_join + sum_select_full_range_join + sum_select_range + sum_select_range_check) DESC
 LIMIT 10;
 ```
 
@@ -304,25 +94,17 @@ LIMIT 10;
 
 ```sql
 SELECT 
-    ps.id, 
-    ps.user, 
-    ps.host, 
-    ps.db, 
-    ps.command, 
-    ps.time, 
-    ps.state, 
-    ps.info, 
-    ps.bytes_sent
+    sql_text,
+    current_schema,
+    exec_count,
+    sum_insert_select AS insert_selects,
+    sum_insert_select_rows AS insert_select_rows,
+    sum_update AS updates,
+    sum_update_rows AS update_rows
 FROM 
-    performance_schema.threads ps
-JOIN 
-    performance_schema.events_statements_summary_by_thread_by_event_name es 
-ON 
-    ps.thread_id = es.thread_id
-WHERE 
-    ps.bytes_sent > 0
+    performance_schema.events_statements_summary_by_digest
 ORDER BY 
-    ps.bytes_sent DESC 
+    (sum_insert_select + sum_update) DESC
 LIMIT 10;
 ```
 
@@ -332,26 +114,15 @@ LIMIT 10;
 
 ```sql
 SELECT 
-    ps.id, 
-    ps.user, 
-    ps.host, 
-    ps.db, 
-    ps.command, 
-    ps.time, 
-    ps.state, 
-    ps.info, 
-    es.FILE_SUM_TIMER_READ, 
-    es.FILE_SUM_TIMER_WRITE
+    sql_text,
+    current_schema,
+    exec_count,
+    sum_io_wait/1000 AS sum_io_wait_ms,
+    avg_io_wait/1000 AS avg_io_wait_ms
 FROM 
-    performance_schema.threads ps
-JOIN 
-    performance_schema.file_summary_by_instance es 
-ON 
-    ps.thread_id = es.thread_id
-WHERE 
-    es.FILE_SUM_TIMER_READ > 0 OR es.FILE_SUM_TIMER_WRITE > 0
+    performance_schema.events_statements_summary_by_digest
 ORDER BY 
-    (es.FILE_SUM_TIMER_READ + es.FILE_SUM_TIMER_WRITE) DESC 
+    sum_io_wait DESC
 LIMIT 10;
 ```
 
@@ -361,14 +132,15 @@ LIMIT 10;
 
 ```sql
 SELECT 
-    query, 
-    avg_timer_wait / 1000000000 AS avg_latency_ms, 
-    exec_count, 
-    errors
+    sql_text,
+    current_schema,
+    exec_count,
+    total_latency/1000000 AS total_latency_ms,
+    avg_latency/1000000 AS avg_latency_ms
 FROM 
     performance_schema.events_statements_summary_by_digest
 ORDER BY 
-    avg_timer_wait DESC 
+    total_latency DESC
 LIMIT 10;
 ```
 
@@ -378,21 +150,19 @@ LIMIT 10;
 
 ```sql
 SELECT 
-    object_schema, 
-    object_name, 
-    index_name, 
-    rows_selected, 
-    rows_inserted, 
-    rows_updated, 
-    rows_deleted
+    table_schema,
+    table_name,
+    index_name,
+    user_seeks,
+    user_scans,
+    user_lookups,
+    user_updates
 FROM 
-    performance_schema.table_io_waits_summary_by_index_usage
+    sys.schema_index_statistics
 WHERE 
-    index_name IS NOT NULL
-AND 
-    rows_selected = 0
+    user_seeks = 0 AND user_scans = 0 AND user_lookups = 0
 ORDER BY 
-    rows_inserted + rows_updated + rows_deleted DESC 
+    user_updates DESC
 LIMIT 10;
 ```
 
@@ -402,13 +172,13 @@ LIMIT 10;
 
 ```sql
 SELECT 
-    table_schema, 
-    table_name, 
-    count_star, 
-    sum_timer_wait / 1000000000 AS wait_time_sec
+    OBJECT_SCHEMA,
+    OBJECT_NAME,
+    COUNT_STAR/1000 AS count_star_k,
+    SUM_TIMER_WAIT/1000000000 AS wait_time_sec
 FROM 
     performance_schema.table_lock_waits_summary_by_table
 ORDER BY 
-    sum_timer_wait DESC 
+    SUM_TIMER_WAIT DESC
 LIMIT 10;
 ```
