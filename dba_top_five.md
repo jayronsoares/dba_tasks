@@ -219,12 +219,3 @@ CALL mysql.rds_kill(<PROCESSLIST_ID>);
 ```
 
 Replace `<PROCESSLIST_ID>` with the ID of the thread causing the issue.
-
-### Best Practices for `mysql.rds_kill`
-
-- **Use with Caution**: `mysql.rds_kill` should be used cautiously as it abruptly terminates connections which can lead to data corruption or other issues if not handled properly.
-- **Identify the Right Connection**: Always ensure that the connection being killed is indeed causing a problem. Misidentifying a connection can lead to termination of critical processes.
-- **Monitor Effects**: After killing a connection, monitor the system for any adverse effects to ensure stability.
-- **Log Actions**: Keep a log of killed connections and reasons for transparency and future reference.
-- **Optimize Queries**: Instead of frequently killing problematic queries, focus on optimizing query performance and database schema to prevent such issues from recurring.
-- **Use Metrics**: Utilize CloudWatch or other monitoring tools to keep track of metrics and set up alarms for high CPU usage, long-running queries, or other performance issues.
