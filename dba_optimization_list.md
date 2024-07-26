@@ -1,4 +1,4 @@
-# DBA Troubleshooting Mini Tutorial
+# DBA Troubleshooting
 
 This guide covers essential SQL queries for performance troubleshooting in MySQL. It focuses on identifying slow queries, table scans, and index usage inefficiencies. 
 
