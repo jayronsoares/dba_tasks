@@ -4,6 +4,7 @@
 
 -----------
 ### Query to Check Table Size, Number of Rows, and I/O Block Size
+```sql
 SELECT 
     TABLE_SCHEMA,
     TABLE_NAME,
@@ -25,6 +26,7 @@ WHERE
     AND TABLE_TYPE = 'BASE TABLE'
 ORDER BY 
     total_size DESC;
+    ```sql
 
 
 -----------------
