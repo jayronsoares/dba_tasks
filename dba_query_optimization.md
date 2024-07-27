@@ -26,7 +26,7 @@ WHERE
     AND TABLE_TYPE = 'BASE TABLE'
 ORDER BY 
     total_size DESC;
-    ```sql
+```
 
 
 -----------------
